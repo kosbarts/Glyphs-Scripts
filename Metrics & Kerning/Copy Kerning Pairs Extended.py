@@ -1,4 +1,4 @@
-#MenuTitle: Copy Kerning Pairs...
+#MenuTitle: Copy Kerning Pairs Extended...
 # -*- coding: utf-8 -*-
 __doc__="""
 (GUI) Copies kerning patterns to another. It supports pair-to-pair and preset group copying.
@@ -57,9 +57,9 @@ class CopyKerningPairs( object ):
 
 		tab2 = self.w.tabs[1]
 		tab2.radio = vanilla.RadioGroup((spaceX, 2, 80, 78), ["Letter", "Numeral"], isVertical = True, sizeStyle='regular', callback=self.checkRadio)
-		tab2.popLetter = vanilla.PopUpButton( (spaceX+100, spaceY, 320, 20), ["Caps to Small Caps", "Caps & Lowercase to Superscript", "Caps & Lowercase to Subscript", "Cap to Lowercase"], sizeStyle='regular' )
-		tab2.popNum1 = vanilla.PopUpButton( (spaceX+100, spaceY+40, 140, 20), ["Lining Proportional", "Small Cap", "Numerator", "Denominator", "Superscript", "Subscript" ], sizeStyle='regular' )
-		tab2.popNum2 = vanilla.PopUpButton( (spaceX+100+180, spaceY+40, 140, 20), ["Lining Proportional", "Small Cap", "Numerator", "Denominator", "Superscript", "Subscript" ], sizeStyle='regular' )
+		tab2.popLetter = vanilla.PopUpButton( (spaceX+100, spaceY, 320, 20), ["Caps to Small Caps", "Caps & Lowercase to Superscript", "Caps & Lowercase to Subscript", "Cap to Lowercase", "Punctuation to Small Caps"], sizeStyle='regular' )
+		tab2.popNum1 = vanilla.PopUpButton( (spaceX+100, spaceY+40, 140, 20), ["Lining Proportional", "Small Cap", "Numerator", "Denominator", "Superscript", "Subscript", "Default"], sizeStyle='regular' )
+		tab2.popNum2 = vanilla.PopUpButton( (spaceX+100+180, spaceY+40, 140, 20), ["Lining Proportional", "Small Cap", "Numerator", "Denominator", "Superscript", "Subscript", "Default" ], sizeStyle='regular' )
 		tab2.textTo = vanilla.TextBox( (spaceX+100+151, spaceY+40, 20, textY), "to", sizeStyle='regular' )
 		tab2.textScale = vanilla.TextBox( (spaceX, spaceY+80, 100, textY), "Scale\t\t%", sizeStyle='regular' )
 		tab2.editScale = vanilla.EditText( (spaceX+40, spaceY+77, 40, editY), '100', sizeStyle = 'regular')
@@ -230,7 +230,7 @@ class CopyKerningPairs( object ):
 			print "Copy kerning Pairs Error (dupliKernPair): %s" % e
 
 	def miscSymbolDic(self, miscType):
-		miscSymbols = ["period", "comma", "minus", "plus","equal", "parenleft", "parenright"]
+		miscSymbols = ["period", "comma", "colon", "semicolon", "minus", "plus","equal", "parenleft", "parenright", "question", "questiondown", "exclam", "exclamdown", "hyphen", "asterisk", "quoteleft", "quoteright", "backslash", "slash", "guillemetright", "guillemetleft", "registered", "trademark", "servicemark"]
 		miscSymbolDicNew ={}
 		if miscType == "superscript":
 			suffix1 = ".sups"
@@ -240,13 +240,15 @@ class CopyKerningPairs( object ):
 			suffix2 = "inferior"
 		elif miscType == "smallcap":
 			suffix1 = ".sc"
-			suffix2 = ".smcp"
+			suffix2 = ".c2sc"
 		for thisSymbol in miscSymbols:
 			if thisFont.glyphs[thisSymbol + suffix1]:
 				miscSymbolDicNew.update({thisSymbol:thisSymbol + suffix1})
 			elif thisFont.glyphs[thisSymbol + suffix2]:
 				miscSymbolDicNew.update({thisSymbol:thisSymbol + suffix2})
 		return miscSymbolDicNew
+		
+		
 
 	def numList(self, Suf):
 		nums = [ "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
@@ -257,8 +259,8 @@ class CopyKerningPairs( object ):
 			for i in range(len(nums)):
 				if thisFont.glyphs[nums[i]+".sc"]:
 					nums[i] = nums[i]+".sc"
-				elif thisFont.glyphs[nums[i]+"smcp"]:
-					nums[i] = nums[i]+"smcp"
+				elif thisFont.glyphs[nums[i]+".c2sc"]:
+					nums[i] = nums[i]+".c2sc"
 		elif Suf == 2: #Numerator (.numr)
 			for i in range(len(nums)):
 				nums[i] = nums[i]+".numr"
@@ -277,6 +279,9 @@ class CopyKerningPairs( object ):
 					nums[i] = nums[i]+".subs"
 				elif thisFont.glyphs[nums[i]+"inferior"]:
 					nums[i] = nums[i]+"inferior"
+		elif Suf == 6: #Default
+			for i in range(len(nums)):
+				nums[i] = nums[i]
 		return nums
 
 	def applyKernPreset(self, theMaster, newKernDic, dicL, dicR, scale, skip):
@@ -294,6 +299,57 @@ class CopyKerningPairs( object ):
 		except Exception, e:
 			Glyphs.showMacroWindow()
 			print "Copy kerning Pairs Error (applyKernPreset): %s" % e
+			
+			
+	def dupliPunc(self, theMaster, newKernDic, dicL, dicR, scale, skip):
+		
+		nrmlSymbols = ["period", "comma", "colon", "semicolon", "minus", "plus","equal", "parenleft", "parenright", "question", "questiondown", "exclam", "exclamdown", "hyphen", "asterisk", "quoteleft", "quoteright", "backslash", "slash", "guillemetright", "guillemetleft", "registered", "trademark", "servicemark", "quotedbl"]
+		nrmlSymbolL = {}
+		nrmlSymbolR = {}
+	
+		for thisSymbol in nrmlSymbols:
+			if thisFont.glyphs[thisSymbol]:
+				if thisFont.glyphs[thisSymbol].rightKerningGroup:
+					newSymbL = "@MMK_L_" + thisFont.glyphs[thisSymbol].rightKerningGroup
+				else:
+					newSymbL = thisSymbol
+				if thisFont.glyphs[thisSymbol].leftKerningGroup:
+					newSymbR = "@MMK_R_" + thisFont.glyphs[thisSymbol].leftKerningGroup
+				else:
+					newSymbR = thisSymbol
+			else:
+				newSymbL = None
+				newSymbR = None
+						
+					
+			if newSymbL != None:
+				nrmlSymbolL.update({newSymbL:newSymbL})
+			if newSymbR != None:
+				nrmlSymbolR.update({newSymbR:newSymbR})
+		
+		try:
+			print theMaster.name
+			pairList = newKernDic[theMaster.id]
+			for key1L in dicL:
+				for key1R in nrmlSymbolR:		
+					for i in range(len(pairList)): 
+						if pairList[i][0] == key1L and pairList[i][1] == key1R:
+							if int(abs(float(pairList[i][2])*scale)) >= int(skip):
+								theValue = int(round(float(pairList[i][2])*scale))
+								print "\t%s,  %s,  %s" % (dicL[key1L], nrmlSymbolR[key1R], theValue)
+								thisFont.setKerningForPair(theMaster.id, dicL[key1L], nrmlSymbolR[key1R], theValue)
+			for key2L in nrmlSymbolL:
+				for key2R in dicR:		
+					for i in range(len(pairList)): 
+						if pairList[i][0] == key2L and pairList[i][1] == key2R:
+							if int(abs(float(pairList[i][2])*scale)) >= int(skip):
+								theValue = int(round(float(pairList[i][2])*scale))
+								print "\t%s,  %s,  %s" % (nrmlSymbolL[key2L], dicR[key2R], theValue)
+								thisFont.setKerningForPair(theMaster.id, nrmlSymbolL[key2L], dicR[key2R], theValue)
+		except Exception, e:
+			Glyphs.showMacroWindow()
+			print "Copy kerning Pairs Error (applyKernPreset): %s" % e	
+			
 
 	def dupliKernPreset(self, newKernDic, dic):
 		print "Following pairs have been added.\n"
@@ -334,10 +390,18 @@ class CopyKerningPairs( object ):
 			skip = self.w.tabs[1].editSkip.get()
 
 			if self.w.allMaster.get() == True:
-				for thisMaster in thisFont.masters:
-					self.applyKernPreset(thisMaster, newKernDic, dicL, dicR, scale, skip)
+				if self.w.tabs[1].popLetter.get()!=4:
+					for thisMaster in thisFont.masters:
+						self.applyKernPreset(thisMaster, newKernDic, dicL, dicR, scale, skip)
+				else:
+					for thisMaster in thisFont.masters:
+						self.dupliPunc(thisMaster, newKernDic, dicL, dicR, scale, skip)		
+						
 			elif self.w.allMaster.get() == False:
-				self.applyKernPreset(thisFont.selectedFontMaster, newKernDic, dicL, dicR, scale, skip)
+				if self.w.tabs[1].popLetter.get()!=4:
+					self.applyKernPreset(thisFont.selectedFontMaster, newKernDic, dicL, dicR, scale, skip)
+				else:
+					self.dupliPunc(thisFont.selectedFontMaster, newKernDic, dicL, dicR, scale, skip)
 
 		except Exception, e:
 			Glyphs.showMacroWindow()
@@ -383,11 +447,11 @@ class CopyKerningPairs( object ):
 					if self.w.tabs[1].popLetter.get()==0: #Caps to Small Caps
 						scList = []
 						for thisGlyph in thisFont.glyphs:
-							if thisGlyph.category =="Letter" and (".smcp" in thisGlyph.name or ".sc" in thisGlyph.name):
+							if thisGlyph.category =="Letter" and (".c2sc" in thisGlyph.name or ".sc" in thisGlyph.name):
 								scList.append(thisGlyph.name)
 						capList = list(scList)
 						for i in range(len(capList)):
-							capList[i] = re.sub(".smcp", "", capList[i]).capitalize()
+							capList[i] = re.sub(".c2sc", "", capList[i]).capitalize()
 							capList[i] = re.sub(".sc", "", capList[i]).capitalize()
 							if capList[i] == "Ae":
 								capList[i] = "AE"
@@ -397,16 +461,59 @@ class CopyKerningPairs( object ):
 								capList[i] = "OE"
 							elif capList[i] == "Ij":
 								capList[i] = "IJ"
-						c2scDic={}
+						c2scDicExt={}
 						for i in range(len(capList)):
 							# print capList[i], scList[i]
 							if thisFont.glyphs[capList[i]]:
-								c2scDic.update({capList[i]:scList[i]})
+								c2scDicExt.update({capList[i]:scList[i]})
+								symb = self.miscSymbolDic("smallcap")
+						c2scDic = dict(c2scDicExt.items() + symb.items())
+						
 						self.dupliKernPreset(newKernDic, c2scDic)
+						
+# This time only
+
+					elif self.w.tabs[1].popLetter.get()==4: #Punct to Small Caps
+						scList = []
+						for thisGlyph in thisFont.glyphs:
+							if thisGlyph.category =="Letter" and (".c2sc" in thisGlyph.name or ".sc" in thisGlyph.name):
+								scList.append(thisGlyph.name)
+						capList = list(scList)
+						for i in range(len(capList)):
+							capList[i] = re.sub(".c2sc", "", capList[i]).capitalize()
+							capList[i] = re.sub(".sc", "", capList[i]).capitalize()
+							if capList[i] == "Ae":
+								capList[i] = "AE"
+							if capList[i] == "Aeacute":
+								capList[i] = "AEacute"
+							elif capList[i] == "Oe":
+								capList[i] = "OE"
+							elif capList[i] == "Ij":
+								capList[i] = "IJ"	
+								
+						scNums = []
+						for thisGlyph in thisFont.glyphs:
+							if thisGlyph.category =="Number" and (".c2sc" in thisGlyph.name or ".sc" in thisGlyph.name):
+								scNums.append(thisGlyph.name)
+						capNums = list(scNums)
+						for i in range(len(capNums)):
+							capNums[i] = re.sub(".c2sc", "", capNums[i])
+							capNums[i] = re.sub(".sc", "", capNums[i])
+					
+						scList += scNums
+						capList += capNums
+		
+						Pc2scDicExt={}
+						for i in range(len(capList)):
+								# print capList[i], scList[i]
+								if thisFont.glyphs[capList[i]]:
+									Pc2scDicExt.update({capList[i]:scList[i]})								
+												
+						self.dupliKernPreset(newKernDic, Pc2scDicExt)
 
 # This time only
 
-					elif self.w.tabs[1].popLetter.get()==3: #Caps to Small Caps
+					elif self.w.tabs[1].popLetter.get()==3: #Caps to Lowercase
 						lcList = []
 						for thisGlyph in thisFont.glyphs:
 								if thisGlyph.category =="Letter" and thisGlyph.subCategory == "Lowercase" :
